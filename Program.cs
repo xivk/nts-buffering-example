@@ -10,7 +10,7 @@ namespace NTS_BufferingTest
         {
             NetTopologySuite.IO.GeoJsonSerializer serialize = new NetTopologySuite.IO.GeoJsonSerializer();
             var inputFile1 = File.OpenText("source1.geojson");
-            var inputFile2 = File.OpenText("source2.geojson");
+            var inputFile2 = File.OpenText("source3.geojson");
             var features1 = serialize.Deserialize<FeatureCollection>(new JsonTextReader(inputFile1));
             var features2 = serialize.Deserialize<FeatureCollection>(new JsonTextReader(inputFile2));
 
@@ -34,14 +34,31 @@ namespace NTS_BufferingTest
                     intersections.Add(new Feature(intersection, new AttributesTable()));
                 }
             }
-      
+
+            var differences = new FeatureCollection();
+            foreach (var feature in bufferedFeatures.Features)
+            {
+                foreach (var feature2 in features2.Features)
+                {
+                    var difference = feature.Geometry.Intersection(feature2.Geometry);
+                    differences.Add(new Feature(difference, new AttributesTable()));
+                }
+            }
+
+            File.Delete("buffered.geojson");
             using (var outputFile = new StreamWriter(File.OpenWrite("buffered.geojson")))
             {
                 serialize.Serialize(outputFile, bufferedFeatures);
             }
+            File.Delete("intersections.geojson");
             using (var outputFile = new StreamWriter(File.OpenWrite("intersections.geojson")))
             {
                 serialize.Serialize(outputFile, intersections);
+            }
+            File.Delete("differences.geojson");
+            using (var outputFile = new StreamWriter(File.OpenWrite("differences.geojson")))
+            {
+                serialize.Serialize(outputFile, differences);
             }
         }
     }
